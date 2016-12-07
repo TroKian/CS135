@@ -1,0 +1,334 @@
+// Assignment6.cpp : Defines the entry point for the console application.
+//
+
+#include "stdafx.h"
+#include <iostream>
+#include <fstream>
+#include <string>
+#include <iomanip>
+
+using namespace std;
+const int MaxNumberOfEmployees = 25;
+
+struct Employee
+{
+	string First;
+	string Last;
+	int IDNumber;
+	char Status;
+	double PayRate;
+	double HoursWorked;
+};
+
+//*
+
+ifstream InFileOne;
+string InFileOneName;
+ifstream InFileTwo;
+string InFileTwoName;
+ifstream InFileThree;
+string InFileThreeName;
+
+Employee ListOfEmployees[MaxNumberOfEmployees];
+
+int TempID;
+char TempChangeCode;
+double TempPayChange;
+char TempStatusChange;
+
+
+double TempHoursWorked;
+double TempPay;
+
+double TotalPay = 0;
+double SumOfHoursWorked = 0;
+double TimeLeftOver;
+
+int EmployeeIndex = 0;
+Employee TheCurrentEmployee;
+
+//*
+
+void MultiFile_PrintRoster();
+
+void FileOne_Main();
+void FileOne_Read();
+void FileOne_FixString();
+void FileOne_BubbleSort();
+
+void FileTwo_Main();
+void FileTwo_ReadAndPrint();
+bool FileTwo_DoesHeExist(int);
+void FileTwo_ChangePay(int, double);
+void FileTwo_ChangeStatus(int, char);
+
+void FileThree_Main();
+void FileThree_ReadAndMakeChanges();
+void FileThree_UpdateHoursWorked(int, double);
+void FileThree_EndOutput();
+
+int main()
+{
+	cout << fixed << setprecision(2);
+	
+	cout << endl;
+	cout << setw(42) << setfill('+') << "+" << endl;
+	cout << "Mikian Musser  Lecture 1003  Assignment #6" << endl;
+	cout << setw(42) << setfill('+') << "+" << endl;
+	cout << endl;
+	cout << setfill(' ');
+		
+	FileOne_Main();
+
+	FileTwo_Main();
+	
+	FileThree_Main();
+
+    return 0;
+}
+
+void FileOne_Main()
+{
+	FileOne_Read();
+
+	FileOne_FixString();
+
+	FileOne_BubbleSort();
+
+	MultiFile_PrintRoster();
+
+	cout << endl;
+
+	InFileOne.close();
+}
+
+void FileTwo_Main()
+{
+	FileTwo_ReadAndPrint();
+
+	MultiFile_PrintRoster();
+
+	InFileTwo.close();
+}
+
+void FileThree_Main()
+{
+	FileThree_ReadAndMakeChanges();
+
+	FileThree_EndOutput();
+
+	InFileThree.close();
+}
+
+void MultiFile_PrintRoster()
+{
+	cout << setw(20) << left << "Name" << setw(5) << right << "ID#" << setw(10) << "STATUS" << setw(10) << "RATE" << endl;
+
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		string Temp = ListOfEmployees[i].Last + "," + ListOfEmployees[i].First;
+		cout << setw(20) << left << Temp << setw(5) << right << ListOfEmployees[i].IDNumber << setw(8) << ListOfEmployees[i].Status << setw(4) << right << "$" << setw(8) << ListOfEmployees[i].PayRate << endl;
+	}
+}
+
+void FileOne_Read()
+{
+	cout << "Enter name of the frist data file: " << endl;
+	cin >> InFileOneName;
+	InFileOne.open(InFileOneName.c_str());
+	cout << endl;
+
+	InFileOne >> ListOfEmployees[EmployeeIndex].First;
+	while (InFileOne)
+	{
+		InFileOne >> ListOfEmployees[EmployeeIndex].Last;
+		InFileOne >> ListOfEmployees[EmployeeIndex].IDNumber;
+		InFileOne >> ListOfEmployees[EmployeeIndex].Status;
+		InFileOne >> ListOfEmployees[EmployeeIndex].PayRate;
+		EmployeeIndex++;
+		InFileOne >> ListOfEmployees[EmployeeIndex].First;
+	}
+}
+
+void FileOne_FixString()
+{
+	for (int i = 0; i < MaxNumberOfEmployees; i++)
+	{
+		for (int j = 0; j < ListOfEmployees[i].First.length(); j++)
+		{
+			if (j == 0)
+			{
+				ListOfEmployees[i].First[0] = toupper(ListOfEmployees[i].First[0]);
+			}
+			else
+			{
+				ListOfEmployees[i].First[j] = tolower(ListOfEmployees[i].First[j]);
+			}
+
+			if (j == 0)
+			{
+				ListOfEmployees[i].Last[0] = toupper(ListOfEmployees[i].Last[0]);
+			}
+			else
+			{
+				ListOfEmployees[i].Last[j] = tolower(ListOfEmployees[i].Last[j]);
+			}
+		}
+	}
+}
+
+void FileOne_BubbleSort()
+{
+	for (int j = 0; j < EmployeeIndex - 1; j++)
+		for (int i = 0; i < EmployeeIndex - 1; i++)
+		{
+			if (ListOfEmployees[i].Last > ListOfEmployees[i + 1].Last)
+			{
+				Employee Temp = ListOfEmployees[i + 1];
+				ListOfEmployees[i + 1] = ListOfEmployees[i];
+				ListOfEmployees[i] = Temp;
+			}
+		}
+}
+
+void FileTwo_ReadAndPrint()
+{
+	cout << "Enter the name of the second file:" << endl;
+	cin >> InFileTwoName;
+	InFileTwo.open(InFileTwoName.c_str());
+	cout << endl;
+
+	InFileTwo >> TempID;
+	while (InFileTwo)
+	{
+		if (FileTwo_DoesHeExist(TempID))
+		{
+			InFileTwo >> TempChangeCode;
+
+			if (TempChangeCode == 'P')
+			{
+				InFileTwo >> TempPayChange;
+				FileTwo_ChangePay(TempID, TempPayChange);
+
+				cout << "ID# " << TempID << " hourly pay changed to " << TempPayChange << endl;
+			}
+			else
+			{
+				InFileTwo >> TempStatusChange;
+				FileTwo_ChangeStatus(TempID, TempStatusChange);
+
+				cout << "ID# " << TempID << " status changed to " << TempStatusChange << endl;
+			}
+		}
+		else
+		{
+			cout << "ID# " << TempID << " is invalid." << endl;
+			InFileTwo.ignore(80, '\n');
+		}
+		InFileTwo >> TempID;
+	}
+	cout << endl;
+}
+
+bool FileTwo_DoesHeExist(int TempID)
+{
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		if (TempID == ListOfEmployees[i].IDNumber)
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+void FileTwo_ChangePay(int TempID, double TempPayChange)
+{
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		if (TempID == ListOfEmployees[i].IDNumber)
+		{
+			ListOfEmployees[i].PayRate = TempPayChange;
+		}
+	}
+}
+
+void FileTwo_ChangeStatus(int TempID, char TempStatusChange)
+{
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		if (TempID == ListOfEmployees[i].IDNumber)
+		{
+			ListOfEmployees[i].Status = TempStatusChange;
+		}
+	}
+}
+
+void FileThree_ReadAndMakeChanges()
+{
+	cout << "Enter name of third data file: " << endl;
+	cin >> InFileThreeName;
+	InFileThree.open(InFileThreeName.c_str());
+	cout << endl;
+
+	InFileThree >> TempID;
+	while (InFileThree)
+	{
+		if (FileTwo_DoesHeExist(TempID))
+		{
+			InFileThree >> TempHoursWorked;
+
+			FileThree_UpdateHoursWorked(TempID, TempHoursWorked);
+		}
+		else
+		{
+			InFileThree.ignore(80, '\n');
+		}
+		InFileThree >> TempID;
+	}
+}
+
+void FileThree_UpdateHoursWorked(int TempID, double TempHoursWorked)
+{
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		if (TempID == ListOfEmployees[i].IDNumber)
+		{
+			ListOfEmployees[i].HoursWorked = ListOfEmployees[i].HoursWorked + TempHoursWorked;
+		}
+	}
+}
+
+void FileThree_EndOutput()
+{
+	cout << setw(20) << left << "Name" << setw(5) << right << setw(8) << "PAY RATE" << setw(8) << "HOURS" << setw(11) << "TOTAL" << endl;
+
+
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		string TempName = ListOfEmployees[i].Last + "," + ListOfEmployees[i].First;
+
+		if (ListOfEmployees[i].HoursWorked > 40.00 && ListOfEmployees[i].Status == 'F')
+		{
+			TimeLeftOver = ListOfEmployees[i].HoursWorked - 40.00;
+			TempPay = (ListOfEmployees[i].PayRate * 40.00) + (ListOfEmployees[i].PayRate * 1.5) * TimeLeftOver;
+		}
+		else
+		{
+			TempPay = ListOfEmployees[i].HoursWorked * ListOfEmployees[i].PayRate;
+		}
+
+		TotalPay += TempPay;
+
+		cout << setw(21) << left << TempName << right << "$" << setw(6) << ListOfEmployees[i].PayRate << setw(8) << ListOfEmployees[i].HoursWorked << setw(4) << "$" << setw(10) << right << TempPay << endl;
+	}
+
+	// sum the hours
+	for (int i = 0; i < EmployeeIndex; i++)
+	{
+		SumOfHoursWorked += ListOfEmployees[i].HoursWorked;
+	}
+
+	cout << setw(21) << left << "TOTAL" << right << setw(14) << SumOfHoursWorked << setw(5) << "$" << setw(10) << right << TotalPay << endl;
+
+}
